@@ -24,7 +24,7 @@ from oauth2client.file import Storage
 from oauth2client.client import AccessTokenRefreshError, flow_from_clientsecrets
 from oauth2client.tools import run
 
-logger = logging.getLogger(__name__)
+
 FLAGS = gflags.FLAGS
 
 # CLIENT_SECRETS, name of a file containing the OAuth 2.0 information for this
@@ -177,7 +177,7 @@ def get_folder_contents(service, http, folder, base_path='./', depth=0):
 
             extension = export_mimeType[item['mimeType']][1]
             full_path = dest_path + item['title'].replace('/', '_') + os.extsep + extension
-            print full_path
+
         else:
 
             full_path = dest_path + item['title'].replace('/', '_')
@@ -229,7 +229,6 @@ def download_file(service, drive_file, dest_path):
                 #I'm not sure if this is useful
                 download_url = drive_file.get('exportLinks')['application/pdf']
                 
-                #extension = "pdf"
             
     else:
         
