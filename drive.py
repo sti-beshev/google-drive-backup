@@ -42,7 +42,7 @@ WARNING: Please configure OAuth 2.0
 To make this sample run you will need to populate the client_secrets.json file
 found at:
 
-   %s
+%s
 
 with information from the APIs Console <https://code.google.com/apis/console>.
 
@@ -64,60 +64,53 @@ gflags.DEFINE_string('destination', 'downloaded/', 'Destination folder location'
 gflags.DEFINE_boolean('debug', False, 'Log folder contents as being fetched')
 gflags.DEFINE_string('logfile', 'drive.log', 'Location of file to write the log')
 gflags.DEFINE_string('drive_id', 'root', 'ID of the folder whose contents are to be fetched')
+gflags.DEFINE_enum('export', 'OO', ['PDF', 'OO', 'MSO'], 'Export format. Export to PDF, OpenOffice, or MS Office format')
 
-#Trying to define a commandline to give some options when exporting native Gdocs:
 
-#gflags.DEFINE_enum('export', 'openoffice', ['pdf', 'openoffice', 'msoffice'], 'Export format')
-#export_format = FLAGS.export 
 
-#But it doesn't seem to work. Why?
-
-#In the meantime, we have to hardcode the default export 
-export_format = 'openoffice'
-#It defines to which format native Gdocs and Gspreadsheets will be exported to (ods, odt, docx, xslx, etc.)
+def export_type():
 
 #Defining a "export_format" dictionary:
 # *key = source mimeType of the Gdoc
 # *value = a list of the target mimeType (index 0) + the target file extension (index 1)
 #Values change according to the "export format" defined by the user.
 #Maybe is there a cleaner way to do this?
-
-if export_format == 'msoffice':
-    export_mimeType = {
-    'application/vnd.google-apps.document': ('application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'docx'),
-    'application/vnd.google-apps.drawing': ('image/png', 'png'),
-    'application/vnd.google-apps.form': ('text/csv', 'csv'),
-#'application/vnd.google-apps.fusiontable' : Can it be exported?
-    'application/vnd.google-apps.photo': ('image/png', 'png'),
-    'application/vnd.google-apps.presentation': ('application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'),
-    'application/vnd.google-apps.spreadsheet': ('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx')
+    if FLAGS['export'].value == 'MSO':
+        return {
+        'application/vnd.google-apps.document': ('application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'docx'),
+        'application/vnd.google-apps.drawing': ('image/png', 'png'),
+    #'application/vnd.google-apps.form': ('text/csv', 'csv'), : Can it be exported?
+    #'application/vnd.google-apps.fusiontable' : Can it be exported?
+        'application/vnd.google-apps.photo': ('image/png', 'png'),
+        'application/vnd.google-apps.presentation': ('application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'),
+        'application/vnd.google-apps.spreadsheet': ('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'xlsx')
+        
+        }
+        
+    elif FLAGS['export'].value == 'OO':
+        return {
+        'application/vnd.google-apps.document': ('application/vnd.oasis.opendocument.text', 'odt'),
+        'application/vnd.google-apps.drawing': ('image/png', 'png'),
+    #'application/vnd.google-apps.form': ('text/csv', 'pdf'),
+    #'application/vnd.google-apps.fusiontable'
+        'application/vnd.google-apps.photo': ('image/png', 'png'),
+        'application/vnd.google-apps.presentation': ('application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'),
+        'application/vnd.google-apps.spreadsheet': ('application/x-vnd.oasis.opendocument.spreadsheet', 'ods')
+        
+        }
+        
+    elif FLAGS['export'].value == 'PDF':
+        return {
+        'application/vnd.google-apps.document': ('application/pdf', 'pdf'),
+        'application/vnd.google-apps.drawing': ('image/png', 'png'),
+    #'application/vnd.google-apps.form': ('text/csv', 'csv'),
+    #'application/vnd.google-apps.fusiontable' :
+        'application/vnd.google-apps.photo': ('image/png', 'png'),
+        'application/vnd.google-apps.presentation': ('application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pdf'),
+        'application/vnd.google-apps.spreadsheet': ('application/pdf', 'pdf')
+        
+        }
     
-    }
-    
-elif export_format == 'openoffice':
-    export_mimeType = {
-    'application/vnd.google-apps.document': ('application/vnd.oasis.opendocument.text', 'odt'),
-    'application/vnd.google-apps.drawing': ('image/png', 'png'),
-    'application/vnd.google-apps.form': ('text/csv', 'csv'),
-#'application/vnd.google-apps.fusiontable'
-    'application/vnd.google-apps.photo': ('image/png', 'png'),
-    'application/vnd.google-apps.presentation': ('application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pptx'),
-    'application/vnd.google-apps.spreadsheet': ('application/x-vnd.oasis.opendocument.spreadsheet', 'ods')
-    
-    }
-    
-elif export_format == 'pdf':
-    export_mimeType = {
-    'application/vnd.google-apps.document': ('application/pdf', 'pdf'),
-    'application/vnd.google-apps.drawing': ('image/png', 'png'),
-    'application/vnd.google-apps.form': ('text/csv', 'csv'),
-#'application/vnd.google-apps.fusiontable' : 
-    'application/vnd.google-apps.photo': ('image/png', 'png'),
-    'application/vnd.google-apps.presentation': ('application/vnd.openxmlformats-officedocument.presentationml.presentation', 'pdf'),
-    'application/vnd.google-apps.spreadsheet': ('application/pdf', 'pdf')
-    
-    }
-
 
 def open_logfile():
     if not re.match('^/', FLAGS.logfile):
@@ -145,8 +138,9 @@ def is_file_modified(drive_file, local_file):
         return True
 
 def get_folder_contents(service, http, folder, base_path='./', depth=0):
+    
     if FLAGS.debug:
-        log("\n" + '  ' * depth + "Getting contents of folder %s" % folder['title'])
+        log("\n" + ' ' * depth + "Getting contents of folder %s" % folder['title'])
     try:
         folder_contents = service.files().list(q="'%s' in parents" % folder['id']).execute()
     except:
@@ -165,22 +159,26 @@ def get_folder_contents(service, http, folder, base_path='./', depth=0):
     if FLAGS.debug:
         for item in folder_contents:
             if is_folder(item):
-                log('  ' * depth + "[] " + item['title'])
+                log(' ' * depth + "[] " + item['title'])
             else:
-                log('  ' * depth + "-- " + item['title'])
-
-    ensure_dir(dest_path)
-
-    for item in filter(is_file, folder_contents):
+                log(' ' * depth + "-- " + item['title'])
         
+    ensure_dir(dest_path)
+    export_mimeType = export_type()
+    for item in filter(is_file, folder_contents):
+        #Check if it is a native Gdoc
         if is_google_doc(item):
-
-            extension = export_mimeType[item['mimeType']][1]
-            full_path = dest_path + item['title'].replace('/', '_') + os.extsep + extension
-
+            #Check if it is an exportable document
+            if item['mimeType'] in export_mimeType.keys():
+                
+                extension = export_mimeType[item['mimeType']][1]
+                full_path = dest_path + item['title'].replace('/', '_') + os.extsep + extension
+            else:
+                full_path = dest_path + item['title'].replace('/', '_')
         else:
-
             full_path = dest_path + item['title'].replace('/', '_')
+
+
         if is_file_modified(item, full_path):
             is_file_new = not os.path.exists(full_path)
             
@@ -199,42 +197,41 @@ def get_folder_contents(service, http, folder, base_path='./', depth=0):
 def download_file(service, drive_file, dest_path):
     """Download a file's content.
 
-    Args:
-      service: Drive API service instance.
-      drive_file: Drive File instance.
+Args:
+service: Drive API service instance.
+drive_file: Drive File instance.
 
-    Returns:
-      File's content if successful, None otherwise.
-    """
+Returns:
+File's content if successful, None otherwise.
+"""
         
     #Showing progress
-    print drive_file['title'] + "..."
-    
+    print drive_file['title'] + " download in progress..."
+    export_mimeType = export_type()    
     if is_google_doc(drive_file):
-        extension = export_mimeType[drive_file['mimeType']][1]
-
-        file_location = dest_path + drive_file['title'].replace('/', '_') + os.extsep + extension
-
+        
+           
         if drive_file['mimeType'] in export_mimeType.keys():
-            
+            extension = export_mimeType[drive_file['mimeType']][1]
+            file_location = dest_path + drive_file['title'].replace('/', '_') + os.extsep + extension
         #From the "export_mimeType" dictionary, retrieving data corresponding to the source mimeType:
             source_mimeType = drive_file['mimeType']
             dest_mimeType = export_mimeType[source_mimeType]
             
-            #Retrieving the target mimeType (index 0) for putting it as a download url parameter 
-            download_url = drive_file.get('exportLinks')[dest_mimeType[0]]  
+            #Retrieving the target mimeType (index 0) for putting it as a download url parameter
+            download_url = drive_file.get('exportLinks')[dest_mimeType[0]]
         
-        else:            
-                #if source mimeType is unknown, export to pdf should work
-                #I'm not sure if this is useful
-                download_url = drive_file.get('exportLinks')['application/pdf']
+        else:
+                #if source mimeType is unknown, the google doc can't be exported
+            print drive_file['title'] + " can't be exported (" + drive_file['mimeType'] + " mimeType)"        
+            return False
                 
             
     else:
         
         file_location = dest_path + drive_file['title'].replace('/', '_')
     
-        download_url = drive_file['downloadUrl']        
+        download_url = drive_file['downloadUrl']
         
     if download_url:
         try:
@@ -244,8 +241,8 @@ def download_file(service, drive_file, dest_path):
             download_file(service, drive_file, dest_path)
             return False
 
-        if resp.status == 200:        
-            
+        if resp.status == 200:
+
             try:
                 target = open(file_location, 'wb')
             except:
@@ -267,6 +264,7 @@ def main(argv):
     # Let the gflags module process the command-line arguments
     try:
         argv = FLAGS(argv)
+        
     except gflags.FlagsError, e:
         print '%s\\nUsage: %s ARGS\\n%s' % (e, argv[0], FLAGS)
         sys.exit(1)
