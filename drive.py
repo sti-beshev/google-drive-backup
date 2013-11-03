@@ -147,7 +147,9 @@ def download_file( service, drive_file, dest_path ):
     file_location = dest_path + drive_file['title'].replace( '/', '_' )
 
     if is_google_doc(drive_file):
-        download_url = drive_file['exportLinks']['application/pdf']
+        download_url = drive_file.get('exportLinks')['application/pdf']
+        #drive_file['exportLinks'] generates corrupted files when exporting to pdf, docx or xlsx
+        #have to use drive_file.get('exportLinks') instead
     else:
         download_url = drive_file['downloadUrl']
     if download_url:
