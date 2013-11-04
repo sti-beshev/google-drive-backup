@@ -8,6 +8,7 @@ A python script to sync your google drive contents.
 * Downloads a file only if it has been modified since last download
 * Logs all actions (optional)
 * Uses OAuth2 authentication and can remember authentication
+* Exports and downloads native Google Documents and Spreadsheets as Microsoft Office, Open Office or PDF documents
 
 ## Requirements
 * Google API Python library. To install run
