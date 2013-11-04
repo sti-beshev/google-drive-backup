@@ -8,7 +8,7 @@ A python script to sync your google drive contents.
 * Downloads a file only if it has been modified since last download
 * Logs all actions (optional)
 * Uses OAuth2 authentication and can remember authentication
-* Exports and downloads native Google Documents and Spreadsheets as Microsoft Office, Open Office or PDF documents
+* Exports and downloads native Google Documents, Spreadsheets, and Presentations, as Microsoft Office, Open Office or PDF documents
 
 ## Requirements
 * Google API Python library. To install run
@@ -32,4 +32,4 @@ Following command line options are available.
 
 **--drive_id** ID of the folder which you want to download. By default, entire "My Drive" is downloaded.
 
-**--export** Defines the export format for native Google Documents and Spreadsheets: Microsoft Office (MSO), OpenOffice (OO), or PDF.  By default, export to OpenOffice format (.odt and .ods files).
+**--export** Defines the export format for native Google Documents, Spreadsheets, and Presentations: Microsoft Office (MSO), OpenOffice (OO), or PDF.  By default, export to OpenOffice format (.odt for Gdocs; .ods for Gspreadsheets; .pptx for presentations).
