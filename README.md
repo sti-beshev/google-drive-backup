@@ -30,3 +30,5 @@ Following command line options are available.
 **--logfile** - Path to the file to which the logs should be written to. By default, writes to `drive.log` in the current directory. The file will be overwritten every time the script is run.
 
 **--drive_id** ID of the folder which you want to download. By default, entire "My Drive" is downloaded.
+
+**--export** Defines the export format for native Google Documents and Spreadsheets: Microsoft Office (MSO), OpenOffice (OO), or PDF.  By default, export to OpenOffice format (.odt and .ods files).
