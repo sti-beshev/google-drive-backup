@@ -32,7 +32,7 @@ FLAGS = gflags.FLAGS
 # on the API Access tab on the Google APIs
 # Console <http://code.google.com/apis/console>
 
-CLIENT_SECRETS = '<PATH TO YOUR CLIENT SECRETS>'
+CLIENT_SECRETS = open('path_secrets.conf').read() #the path to the client_secrets has to be defined in this conf file
 
 # Helpful message to display in the browser if the CLIENT_SECRETS file
 # is missing.
