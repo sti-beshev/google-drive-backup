@@ -19,12 +19,14 @@ __author__ = '''viky.nandha@gmail.com (Vignesh Nandha Kumar);
                 jeanbaptiste.bertrand@gmail.com (Jean-Baptiste Bertrand)
                 sti.beshev@gmail.com'''
 
-import gflags, httplib2, logging, os, pprint, sys, re, time
+import gflags, httplib2, logging, os, pprint, sys, re, time, pytz
 
 from apiclient.discovery import build
 from oauth2client.file import Storage
 from oauth2client.client import AccessTokenRefreshError, flow_from_clientsecrets
 from oauth2client.tools import run_flow
+from tzlocal import get_localzone
+from datetime import datetime
 
 
 FLAGS = gflags.FLAGS
@@ -133,10 +135,18 @@ def is_google_doc(drive_file):
     return True if re.match('^application/vnd\.google-apps\..+', drive_file['mimeType']) else False
 
 def is_file_modified(drive_file, local_file):
+    
     if os.path.exists(local_file):
-        rtime = time.mktime(time.strptime(drive_file['modifiedDate'], '%Y-%m-%dT%H:%M:%S.%fZ'))
-        ltime = os.path.getmtime(local_file)
-        return rtime > ltime
+        
+        local_file_time_from_epoch = os.path.getmtime(local_file)
+        
+        awear_server_file_time = pytz.utc.localize(datetime.strptime(drive_file['modifiedDate'], '%Y-%m-%dT%H:%M:%S.%fZ'))
+        awear_server_file_time = awear_server_file_time.astimezone(get_localzone())
+        
+        corect_server_time_from_epoch = datetime.timestamp(awear_server_file_time)  
+        
+        return corect_server_time_from_epoch > local_file_time_from_epoch
+    
     else:
         return True
 
