@@ -43,7 +43,7 @@ Following command line options are available.
 
 **--add_folder** Adds folder to folders.json. Have to use it two times with the name of the folder and then with drive id of the folder. Usage :  `--add_folder` 'name of the folder' `--add_folder` 'folder id'. 
 
-##Custom folder list
+## Custom folder list
 To add folder to your custom list use :
 
  `--add_folder` 'name of the folder' `--add_folder` 'folder id' 
