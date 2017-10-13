@@ -2,3 +2,6 @@ client_secrets.json
 *.dat
 downloaded
 *.log
+.project
+.pydevproject
+.pydevproject.bak

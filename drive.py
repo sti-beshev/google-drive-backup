@@ -15,14 +15,16 @@ To get detailed log output run:
     $ python drive.py --logging_level=DEBUG
 """
 
-__author__ = 'viky.nandha@gmail.com (Vignesh Nandha Kumar); jeanbaptiste.bertrand@gmail.com (Jean-Baptiste Bertrand)'
+__author__ = '''viky.nandha@gmail.com (Vignesh Nandha Kumar); 
+                jeanbaptiste.bertrand@gmail.com (Jean-Baptiste Bertrand)
+                sti.beshev@gmail.com'''
 
 import gflags, httplib2, logging, os, pprint, sys, re, time
 
 from apiclient.discovery import build
 from oauth2client.file import Storage
 from oauth2client.client import AccessTokenRefreshError, flow_from_clientsecrets
-from oauth2client.tools import run
+from oauth2client.tools import run_flow
 
 
 FLAGS = gflags.FLAGS
@@ -32,7 +34,7 @@ FLAGS = gflags.FLAGS
 # on the API Access tab on the Google APIs
 # Console <http://code.google.com/apis/console>
 
-CLIENT_SECRETS = open('path_secrets.conf').read() #the path to the client_secrets has to be defined in this conf file
+CLIENT_SECRETS = "client_secrets.json"
 
 # Helpful message to display in the browser if the CLIENT_SECRETS file
 # is missing.
@@ -113,13 +115,14 @@ def export_type():
     
 
 def open_logfile():
-    if not re.match('^/', FLAGS.logfile):
-        FLAGS.logfile = FLAGS.destination + FLAGS.logfile
+    
+    #if not re.match('^/', FLAGS.logfile):
+        #FLAGS.logfile = FLAGS.destination + FLAGS.logfile
     global LOG_FILE
     LOG_FILE = open(FLAGS.logfile, 'w+')
 
-def log(str):
-    LOG_FILE.write((str + '\n').encode('utf8'))
+def log(log):
+    LOG_FILE.write(str(log) + '\n')
 
 def ensure_dir(directory):
     if not os.path.exists(directory):
@@ -206,7 +209,7 @@ File's content if successful, None otherwise.
 """
         
     #Showing progress
-    print drive_file['title'] + " download in progress..."
+    print(drive_file['title'] + " download in progress...")
     export_mimeType = export_type()    
     if is_google_doc(drive_file):
         
@@ -223,7 +226,7 @@ File's content if successful, None otherwise.
         
         else:
                 #if source mimeType is unknown, the google doc can't be exported
-            print drive_file['title'] + " can't be exported (" + drive_file['mimeType'] + " mimeType)"        
+            print(drive_file['title'] + " can't be exported (" + drive_file['mimeType'] + " mimeType)")        
             return False
                 
             
@@ -265,8 +268,8 @@ def main(argv):
     try:
         argv = FLAGS(argv)
         
-    except gflags.FlagsError, e:
-        print '%s\\nUsage: %s ARGS\\n%s' % (e, argv[0], FLAGS)
+    except gflags.FlagsError as e:
+        print('%s\\nUsage: %s ARGS\\n%s' % (e, argv[0], FLAGS))
         sys.exit(1)
 
     # Set the logging according to the command-line flag
@@ -279,7 +282,7 @@ def main(argv):
     credentials = storage.get()
 
     if credentials is None or credentials.invalid:
-        credentials = run(FLOW, storage)
+        credentials = run_flow(FLOW, storage)
 
     # Create an httplib2.Http object to handle our HTTP requests and authorize it
     # with our good Credentials.
