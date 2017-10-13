@@ -74,7 +74,9 @@ gflags.DEFINE_string('drive_id', 'root', 'ID of the folder whose contents are to
 gflags.DEFINE_enum('export', 'OO', ['PDF', 'OO', 'MSO'], 'Export format. Export to PDF, OpenOffice, or MS Office format')
 gflags.DEFINE_boolean('from_folders_list', False, 'Download only the folders in folders.json')
 gflags.DEFINE_boolean("list_folder_names", False, 'List of all the folders in folders.json')
-gflags.DEFINE_multistring('add_folder', ['default_name', 'default_drive_id'], "Adds folder to folders.json")
+gflags.DEFINE_multistring('add_folder', ['default_name', 'default_drive_id'], '''Adds folder to folders.json. 
+Have to use it two times with the name of the folder and then with drive id of the folder. 
+Usage : --add_folder 'name of the folder' --add_folder 'folder id'.''')
 
 
 

@@ -9,6 +9,7 @@ A python script to sync your google drive contents.
 * Logs all actions (optional)
 * Uses OAuth2 authentication and can remember authentication
 * Exports and downloads native Google Documents, Spreadsheets, and Presentations, as Microsoft Office, Open Office or PDF documents
+* You can create a custom list of folders to check and download if needed.
 
 ## Requirements
 * Google API Python library. To install run
@@ -35,3 +36,18 @@ Following command line options are available.
 **--drive_id** ID of the folder which you want to download. By default, entire "My Drive" is downloaded.
 
 **--export** Defines the export format for native Google Documents, Spreadsheets, and Presentations: Microsoft Office (MSO), OpenOffice (OO), or PDF.  By default, export to OpenOffice format (.odt for Gdocs; .ods for Gspreadsheets; .pptx for presentations).
+
+**--from_folders_list** Check and download if needed only folders in folders.json.
+
+**--list_folder_names**  Give a list of all the folder names in folders.json.
+
+**--add_folder** Adds folder to folders.json. Have to use it two times with the name of the folder and then with drive id of the folder. Usage :  `--add_folder` 'name of the folder' `--add_folder` 'folder id'. 
+
+##Custom folder list
+To add folder to your custom list use :
+
+ `--add_folder` 'name of the folder' `--add_folder` 'folder id' 
+ 
+ All folder names and drive ids will be stored in `folders.json`.
+ 
+ For now if you want to edit or delete folder info in `folders.json`, you have to manually edit the file.
