@@ -19,7 +19,7 @@ __author__ = '''viky.nandha@gmail.com (Vignesh Nandha Kumar);
                 jeanbaptiste.bertrand@gmail.com (Jean-Baptiste Bertrand)
                 sti.beshev@gmail.com'''
 
-import gflags, httplib2, logging, os, pprint, sys, re, time, pytz
+import gflags, httplib2, logging, os, pprint, sys, re, time, pytz, json
 
 from apiclient.discovery import build
 from oauth2client.file import Storage
@@ -57,6 +57,9 @@ FLOW = flow_from_clientsecrets(CLIENT_SECRETS,
     scope='https://www.googleapis.com/auth/drive',
     message=MISSING_CLIENT_SECRETS_MESSAGE)
 
+# FOLDERS_FILE, holds a custom list of folder names and their drive id. 
+FOLDERS_FILE = "folders.json"
+
 
 # The gflags module makes defining command-line options easy for
 # applications. Run this program with the '--help' argument to see
@@ -69,6 +72,9 @@ gflags.DEFINE_boolean('debug', False, 'Log folder contents as being fetched')
 gflags.DEFINE_string('logfile', 'drive.log', 'Location of file to write the log')
 gflags.DEFINE_string('drive_id', 'root', 'ID of the folder whose contents are to be fetched')
 gflags.DEFINE_enum('export', 'OO', ['PDF', 'OO', 'MSO'], 'Export format. Export to PDF, OpenOffice, or MS Office format')
+gflags.DEFINE_boolean('from_folders_list', False, 'Download only the folders in folders.json')
+gflags.DEFINE_boolean("list_folder_names", False, 'List of all the folders in folders.json')
+gflags.DEFINE_multistring('add_folder', ['default_name', 'default_drive_id'], "Adds folder to folders.json")
 
 
 
@@ -273,7 +279,97 @@ File's content if successful, None otherwise.
         return False
 
 
+def list_folder_names():
+    
+    ''' Shows in console a list of folder names in folders.json .
+    '''
+    
+    try:
+        
+        with open(FOLDERS_FILE, 'r') as tf:
+        
+            text_file = tf.read()
+            
+        folders = json.loads(text_file)
+        
+        print("\n")
+        
+        for folders_list in folders:
+            
+            print(folders_list['name']) 
+            
+    except OSError as e:
+        
+        log(e)
+        
+def add_folder(folder_name, folder_drive_id):
+    
+    ''' Adds folder to folders.json .
+    ''' 
+    
+    def save_file(folder_name, folder_drive_id, folders):
+        
+        if folders is None:
+            folders = []     
+        
+        folders.append({'name': folder_name, 'drive_id': folder_drive_id})
+        
+        try:
+            
+            with open(FOLDERS_FILE, 'w') as tf:
+        
+                tf.write(json.dumps(folders))
+                
+            print("\n")
+            print("Folder {} added to {}".format(folder_name, FOLDERS_FILE))
+                  
+        except OSError as e:
+            
+            log(e)
+
+    
+    try:
+        
+        with open(FOLDERS_FILE, 'r') as tf:
+        
+            text_file = tf.read()
+            
+        folders = json.loads(text_file)
+        
+        save_file(folder_name, folder_drive_id, folders)
+        
+    except FileNotFoundError:
+        
+        save_file(folder_name, folder_drive_id, folders=None)
+        
+
+def get_list_of_folders_drive_id():
+    
+    ''' Returns list of drive ids of all the folders in folders.json .
+    '''
+    
+    folders_drive_id = []
+    
+    try:
+        
+        with open(FOLDERS_FILE, 'r') as tf:
+        
+            text_file = tf.read()
+            
+            folders = json.loads(text_file)
+        
+            for folders_list in folders:
+            
+                folders_drive_id.append(folders_list['drive_id'])
+            
+    except OSError as e:
+        
+        log(e)
+        
+    return folders_drive_id
+
 def main(argv):
+    
     # Let the gflags module process the command-line arguments
     try:
         argv = FLAGS(argv)
@@ -281,34 +377,70 @@ def main(argv):
     except gflags.FlagsError as e:
         print('%s\\nUsage: %s ARGS\\n%s' % (e, argv[0], FLAGS))
         sys.exit(1)
-
+        
     # Set the logging according to the command-line flag
     logging.getLogger().setLevel(getattr(logging, FLAGS.logging_level))
-
-    # If the Credentials don't exist or are invalid run through the native client
-    # flow. The Storage object will ensure that if successful the good
-    # Credentials will get written back to a file.
-    storage = Storage('drive.dat')
-    credentials = storage.get()
-
-    if credentials is None or credentials.invalid:
-        credentials = run_flow(FLOW, storage)
-
-    # Create an httplib2.Http object to handle our HTTP requests and authorize it
-    # with our good Credentials.
-    http = httplib2.Http()
-    http = credentials.authorize(http)
-
-    service = build("drive", "v2", http=http)
-
+    
     open_logfile()
+        
+    if FLAGS.list_folder_names == True:
+        
+        list_folder_names()
+        
+    elif (FLAGS.add_folder[0] != 'default_name' and FLAGS.add_folder[0] != 'default_drive_id'):
+        
+        add_folder(FLAGS.add_folder[0], FLAGS.add_folder[1])
+        
+    else:
 
-    try:
-        start_folder = service.files().get(fileId=FLAGS.drive_id).execute()
-        get_folder_contents(service, http, start_folder, FLAGS.destination)
-    except AccessTokenRefreshError:
-        print ("The credentials have been revoked or expired, please re-run"
-               "the application to re-authorize")
+        # If the Credentials don't exist or are invalid run through the native client
+        # flow. The Storage object will ensure that if successful the good
+        # Credentials will get written back to a file.
+        storage = Storage("drive.dat")
+        credentials = storage.get()
+    
+        if credentials is None or credentials.invalid:
+            credentials = run_flow(FLOW, storage)
+    
+        # Create an httplib2.Http object to handle our HTTP requests and authorize it
+        # with our good Credentials.
+        http = httplib2.Http()
+        http = credentials.authorize(http)
+    
+        service = build("drive", "v2", http=http)
+        
+        # Only the folders from folders.json .
+        if FLAGS.from_folders_list == True:
+            
+            folders_drive_id = get_list_of_folders_drive_id()
+            
+            if not folders_drive_id:
+                
+                print("No folders in folders.json \n \n")
+                print("Add some folders to folders.json to use '--from_folders_list' \n")
+                
+            else:
+                          
+                for drive_id in folders_drive_id:
+                             
+                    try:
+                    
+                        start_folder = service.files().get(fileId=drive_id).execute()
+                        get_folder_contents(service, http, start_folder, FLAGS.destination)
+                
+                    except AccessTokenRefreshError:
+                        print ("The credentials have been revoked or expired, please re-run"
+                               "the application to re-authorize")
+            
+        else:
+             
+            try:
+                start_folder = service.files().get(fileId=FLAGS.drive_id).execute()
+                get_folder_contents(service, http, start_folder, FLAGS.destination)
+                
+            except AccessTokenRefreshError:
+                print ("The credentials have been revoked or expired, please re-run"
+                       "the application to re-authorize")
 
 if __name__ == '__main__':
     main(sys.argv)

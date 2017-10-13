@@ -1,4 +1,4 @@
-client_secrets.json
+*.json
 *.dat
 downloaded
 *.log
