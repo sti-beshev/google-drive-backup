@@ -312,7 +312,7 @@ def add_folder(folder_name, folder_drive_id):
     def save_file(folder_name, folder_drive_id, folders):
         
         if folders is None:
-            folders = []     
+            folders = []
         
         folders.append({'name': folder_name, 'drive_id': folder_drive_id})
         
@@ -320,7 +320,7 @@ def add_folder(folder_name, folder_drive_id):
             
             with open(FOLDERS_FILE, 'w') as tf:
         
-                tf.write(json.dumps(folders))
+                tf.write(json.dumps(folders, ensure_ascii=False))
                 
             print("\n")
             print("Folder {} added to {}".format(folder_name, FOLDERS_FILE))
